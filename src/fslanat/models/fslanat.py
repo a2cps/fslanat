@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Iterable, Literal
 
@@ -251,4 +252,26 @@ class FSLAnatResult:
             .reset_index()
         )
         volumes["src"] = self.root.name
-        return volumes
+        return (
+            volumes.pivot(columns="region", index="src", values='volume')
+            .reset_index()
+            .rename_axis(None, axis=1)
+        )
+
+    def get_t1volumes(self) -> pd.DataFrame:
+        lines = self.T1_vols.read_text().splitlines()
+        return pd.DataFrame(
+            {
+                "t1_to_mni_scaling": [
+                    float(re.findall(r"\d+\.\d+", lines[0])[0])
+                ],
+                "t1_space_orig_volume": [
+                    int(
+                        re.findall(r" \d+", lines[1])[0]
+                    )  # NOTE: space in pattern required
+                ],
+                "t1_space_mni_volume": [
+                    float(re.findall(r"\d+\.\d+", lines[2])[0])
+                ],
+            }
+        )
