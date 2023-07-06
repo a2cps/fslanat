@@ -214,26 +214,28 @@ class FSLAnatResult:
     def get_volumes(
         self,
         labels: Iterable[FIRSTLabel] = (
-            FIRSTLabel(label="Left-Thalamus-Proper"),
-            FIRSTLabel(label="Left-Caudate"),
-            FIRSTLabel(label="Left-Putamen"),
-            FIRSTLabel(label="Left-Pallidum"),
-            FIRSTLabel(label="Brain-Stem /4th Ventricle"),
-            FIRSTLabel(label="Left-Hippocampus"),
-            FIRSTLabel(label="Left-Amygdala"),
-            FIRSTLabel(label="Left-Accumbens-area"),
-            FIRSTLabel(label="Right-Thalamus-Proper"),
-            FIRSTLabel(label="Right-Caudate"),
-            FIRSTLabel(label="Right-Putamen"),
-            FIRSTLabel(label="Right-Pallidum"),
-            FIRSTLabel(label="Right-Hippocampus"),
-            FIRSTLabel(label="Right-Amygdala"),
-            FIRSTLabel(label="Right-Accumbens-area"),
+            FIRSTLabel(label="Left-Thalamus-Proper"),  # noqa: B008
+            FIRSTLabel(label="Left-Caudate"),  # noqa: B008
+            FIRSTLabel(label="Left-Putamen"),  # noqa: B008
+            FIRSTLabel(label="Left-Pallidum"),  # noqa: B008
+            FIRSTLabel(label="Brain-Stem /4th Ventricle"),  # noqa: B008
+            FIRSTLabel(label="Left-Hippocampus"),  # noqa: B008
+            FIRSTLabel(label="Left-Amygdala"),  # noqa: B008
+            FIRSTLabel(label="Left-Accumbens-area"),  # noqa: B008
+            FIRSTLabel(label="Right-Thalamus-Proper"),  # noqa: B008
+            FIRSTLabel(label="Right-Caudate"),  # noqa: B008
+            FIRSTLabel(label="Right-Putamen"),  # noqa: B008
+            FIRSTLabel(label="Right-Pallidum"),  # noqa: B008
+            FIRSTLabel(label="Right-Hippocampus"),  # noqa: B008
+            FIRSTLabel(label="Right-Amygdala"),  # noqa: B008
+            FIRSTLabel(label="Right-Accumbens-area"),  # noqa: B008
         ),
     ) -> pd.DataFrame:
         """Write the volumes to a csv."""
         nii = np.asanyarray(
-            nb.load(self.first_results.T1_first_all_fast_firstseg).get_fdata(),
+            nb.loadsave.load(
+                self.first_results.T1_first_all_fast_firstseg
+            ).get_fdata(),
             dtype=np.uint8,
         )
         vol_dict = {}
@@ -253,7 +255,7 @@ class FSLAnatResult:
         )
         volumes["src"] = self.root.name
         return (
-            volumes.pivot(columns="region", index="src", values='volume')
+            volumes.pivot(columns="region", index="src", values="volume")
             .reset_index()
             .rename_axis(None, axis=1)
         )

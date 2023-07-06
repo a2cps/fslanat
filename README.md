@@ -1,21 +1,13 @@
 # fslanat
 
-[![PyPI - Version](https://img.shields.io/pypi/v/fslanat.svg)](https://pypi.org/project/fslanat)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fslanat.svg)](https://pypi.org/project/fslanat)
-
 -----
 
-**Table of Contents**
+## Table of Contents
 
 - [Installation](#installation)
-- [License](#license)
 
-## Installation
+### Installation
 
 ```console
-pip install fslanat
+pip install git+https://github.com/a2cps/fslanat.git@39829b2
 ```
-
-## License
-
-`fslanat` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.

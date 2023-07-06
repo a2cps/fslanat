@@ -29,7 +29,13 @@ def _fslanat(image: Path, out: Path):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfsl = Path(tmpdir) / basename
             subprocess.run(
-                ["fsl_anat", "-i", f"{image}", "-o", f"{tmpfsl}"],
+                [  # noqa: S603
+                    "/opt/fsl/share/fsl/bin/fsl_anat",
+                    "-i",
+                    f"{image}",
+                    "-o",
+                    f"{tmpfsl}",
+                ],
                 capture_output=True,
             )
             tmpout = _predict_fsl_anat_output(Path(tmpdir), basename)

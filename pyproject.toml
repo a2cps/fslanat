@@ -8,7 +8,6 @@ dynamic = ["version"]
 description = 'Manage A2CPS Data Freezes'
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
 keywords = []
 authors = [
   { name = "Patrick Sadil", email = "psadil@gmail.com" },
