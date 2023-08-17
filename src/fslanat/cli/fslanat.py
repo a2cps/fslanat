@@ -1,3 +1,4 @@
+import typing
 from pathlib import Path
 
 import click
@@ -8,7 +9,8 @@ from fslanat.flows.fslanat import fslanat_flow
 
 
 def _main(
-    anats: frozenset[Path] | None = None,
+    anats: typing.Sequence[Path],
+    precrops: typing.Sequence[bool],
     output_dir: Path = Path("out"),
     n_workers: int = 1,
 ) -> None:
@@ -28,6 +30,13 @@ def _main(
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
 
+    if not len(anats) == len(precrops):
+        msg = f"""
+        precrops must have the same lengths as anats.
+        Found {len(anats)=} and {len(precrops)=}
+        """
+        raise AssertionError(msg)
+
     fslanat_flow.with_options(
         task_runner=prefect_dask.DaskTaskRunner(
             cluster_kwargs={
@@ -36,12 +45,13 @@ def _main(
                 "dashboard_address": None,
             }
         )
-    )(images=anats, out=output_dir, return_state=True)
+    )(images=anats, out=output_dir, precrops=precrops, return_state=True)
 
 
 @click.command(context_settings={"ignore_unknown_options": True})
 @click.option(
     "--bids-dir",
+    required=True,
     type=click.Path(
         exists=True,
         file_okay=False,
@@ -63,15 +73,23 @@ def _main(
 )
 @click.option("--sub-limit", type=int, default=None)
 @click.option("--n-workers", type=int, default=1)
+@click.option("--precrop", is_flag=True)
 def main(
-    bids_dir: Path | None = None,
+    bids_dir: Path,
     output_dir: Path = Path("out"),
     sub_limit: int | None = None,
     n_workers: int = 1,
+    precrop: bool = False,  # noqa: FBT001, FBT002
 ) -> None:
-    anats = (
-        frozenset(list(bids_dir.rglob("*T1w.nii.gz"))[:sub_limit])
-        if bids_dir
-        else None
+    anats = list(bids_dir.rglob("*T1w.nii.gz"))[:sub_limit]
+    if precrop:
+        precrops = [True] * len(anats)
+    else:
+        precrops = [False] * len(anats)
+
+    _main(
+        output_dir=output_dir,
+        anats=anats,
+        n_workers=n_workers,
+        precrops=precrops,
     )
-    _main(output_dir=output_dir, anats=anats, n_workers=n_workers)
