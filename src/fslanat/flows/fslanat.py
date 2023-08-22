@@ -70,12 +70,6 @@ def _reorient2standard(t1: Path) -> None:
 
 def _precrop(anatdir: Path):
     t1 = anatdir / "T1.nii.gz"
-    nii: nb.ni1.Nifti1Image = nb.loadsave.load(t1)
-    # this follows a check in the original fsl_anat pipeline (section: FIXING NEGATIVE RANGE)
-    minval = nii.get_fdata().min()
-    if minval < 0:
-        msg = f"Something is off. Minimum value is below 0 ({minval=})."
-        raise AssertionError(msg)
 
     # REORIENTATION 2 STANDARD
     _reorient2standard(t1)
@@ -83,16 +77,14 @@ def _precrop(anatdir: Path):
     # AUTOMATIC CROPPING
     fullfov = t1.with_name("T1_fullfov.nii.gz")
     shutil.move(t1, fullfov)
+    nii = nb.loadsave.load(fullfov)
+    sigma = nii.get_fdata().max() * 0.005
+    noisy: np.ndarray = nii.get_fdata() + np.random.normal(0, sigma, nii.shape)
 
-    with tempfile.NamedTemporaryFile(suffix=".nii.gz") as _tmpfile:
-        tmpfile = Path(_tmpfile.name)
-        sigma = nii.get_fdata().max() * 0.005
-        noisy: np.ndarray = nii.get_fdata() + np.random.normal(
-            0, sigma, nii.shape
-        )
+    with tempfile.NamedTemporaryFile(suffix=".nii.gz") as tmpfile:
         nb.ni1.Nifti1Image(
             dataobj=noisy, affine=nii.affine, header=nii.header
-        ).to_filename(tmpfile)
+        ).to_filename(tmpfile.name)
 
         log = subprocess.run(
             [  # noqa: S603
@@ -100,7 +92,7 @@ def _precrop(anatdir: Path):
                 "-m",
                 f"{anatdir / 'T1_roi2nonroi.mat'}",
                 "-i",
-                f"{tmpfile}",
+                f"{tmpfile.name}",
             ],
             capture_output=True,
             text=True,
