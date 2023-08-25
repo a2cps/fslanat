@@ -11,6 +11,7 @@ from fslanat.flows.fslanat import fslanat_flow
 def _main(
     anats: typing.Sequence[Path],
     precrops: typing.Sequence[bool],
+    strongbias: typing.Sequence[bool] | None = None,
     output_dir: Path = Path("out"),
     n_workers: int = 1,
 ) -> None:
@@ -36,6 +37,8 @@ def _main(
         Found {len(anats)=} and {len(precrops)=}
         """
         raise AssertionError(msg)
+    if strongbias is None:
+        strongbias = [False] * len(anats)
 
     fslanat_flow.with_options(
         task_runner=prefect_dask.DaskTaskRunner(
@@ -45,7 +48,13 @@ def _main(
                 "dashboard_address": None,
             }
         )
-    )(images=anats, out=output_dir, precrops=precrops, return_state=True)
+    )(
+        images=anats,
+        out=output_dir,
+        precrops=precrops,
+        strongbias=strongbias,
+        return_state=True,
+    )
 
 
 @click.command(context_settings={"ignore_unknown_options": True})

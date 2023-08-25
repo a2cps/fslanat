@@ -148,6 +148,7 @@ def _fslanat(
     image: Path,
     out: Path,
     precrop: bool = False,  # noqa: FBT002, FBT001
+    strongbias: bool = False,  # noqa: FBT002, FBT001
 ):
     basename = _img_stem(image)
     anat = _predict_fsl_anat_output(out, basename)
@@ -165,6 +166,8 @@ def _fslanat(
             if precrop:
                 _precrop(tmpdir)
                 fslflags += ["--nocrop", "--noreorient"]
+            if strongbias:
+                fslflags += ["--strongbias"]
 
             subprocess.run(
                 [  # noqa: S603
@@ -187,6 +190,7 @@ def fslanat_flow(
     images: typing.Sequence[Path],
     out: Path,
     precrops: typing.Sequence[bool] | None = None,
+    strongbias: typing.Sequence[bool] | None = None,
 ) -> None:
     if precrops is None:
         _precrops = [False] * len(images)
@@ -198,6 +202,18 @@ def fslanat_flow(
             """
             raise AssertionError(msg)
         _precrops = precrops
+    if strongbias is None:
+        _strongbias = [False] * len(images)
+    else:
+        if not len(images) == len(strongbias):
+            msg = f"""
+            If strongbias is provided, it must have the same lengths as images.
+            Found {len(images)=} and {len(strongbias)=}
+            """
+            raise AssertionError(msg)
+        _strongbias = strongbias
 
-    for image, precrop in zip(images, _precrops, strict=True):
-        _fslanat.submit(image, out=out, precrop=precrop)
+    for image, precrop, strongb in zip(
+        images, _precrops, _strongbias, strict=True
+    ):
+        _fslanat.submit(image, out=out, precrop=precrop, strongbias=strongb)
