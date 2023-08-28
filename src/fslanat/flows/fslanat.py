@@ -69,6 +69,14 @@ def _reorient2standard(t1: Path) -> None:
 
 
 def _precrop(anatdir: Path):
+    """
+    im=failing
+    outputname=out
+    i90=$( fslstats $im -P 90 )
+    fslmaths $im -mul 0 -randn -mul $( echo "$i90 * 0.005" | bc -l ) -mas $im -add $im ${im}_noisy
+    roivals=$( robustfov -i ${im}_noisy | grep 0 )
+    fslroi $im $outputname $roivals
+    """
     t1 = anatdir / "T1.nii.gz"
 
     # REORIENTATION 2 STANDARD
@@ -78,8 +86,10 @@ def _precrop(anatdir: Path):
     fullfov = t1.with_name("T1_fullfov.nii.gz")
     shutil.move(t1, fullfov)
     nii = nb.loadsave.load(fullfov)
-    sigma = nii.get_fdata().max() * 0.005
-    noisy: np.ndarray = nii.get_fdata() + np.random.normal(0, sigma, nii.shape)
+    nonzero_i = np.flatnonzero(nii.get_fdata())
+    sigma = np.quantile(nii.get_fdata().flat[nonzero_i], 0.9) * 0.005
+    noisy: np.ndarray = nii.get_fdata().copy()
+    noisy.flat[nonzero_i] += np.random.normal(0, sigma, size=nonzero_i.shape)
 
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as tmpfile:
         nb.ni1.Nifti1Image(
